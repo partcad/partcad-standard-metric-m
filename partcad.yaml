@@ -259,12 +259,31 @@ sketches:
         type: float
         default: 0.0
 
+  m-press:
+    desc: The boundary of a press fit onto an M%size% coarse thread, at its pitch diameter
+    type: basic
+    # d2 = d - 0.649 519 P, the flank diameter of ISO 68-1's basic profile: the
+    # bore meets the thread exactly half way up it, so the crests bite in and
+    # the roots clear. Larger than this and nothing holds; smaller and the
+    # thread has to plough rather than press, which is a tapping drill and is
+    # "m-pilot" above.
+    circle: "%(size - 0.649519 * (pitch if pitch > 0 else ({{ coarse_pitch }}))) / 2%"  # radius
+    parameters:
+      size:
+        type: float
+        default: 3.0
+      # A thread other than the coarse one, as for "m-pilot".
+      pitch:
+        type: float
+        default: 0.0
+
   # The sketch names this package has published, each an alias of one instance
   # of those above, plus the two the split into kinds of opening adds.
 {% for size in all_sizes %}
   m{{ size }}: ":m;size={{ size }}"
   m{{ size }}-clearance: ":m-clearance-medium;size={{ size }}"
   m{{ size }}-pilot: ":m-pilot;size={{ size }}"
+  m{{ size }}-press: ":m-press;size={{ size }}"
   {% for width in widths %}
   m{{ size }}-slotted-{{ width }}: ":m-slotted-medium;size={{ size }},width={{ width }}"
   {% endfor %}
@@ -367,6 +386,49 @@ interfaces:
     mates:
       - "m-pilot-opening;size=%size%"
       - "m-opening;size=%size%"
+
+  # The fourth kind of hole, and the only one that is not a fit between a bore
+  # and a thread of the same nominal size made to match: this one is made *not*
+  # to match. A part is pushed onto the thread rather than screwed along it,
+  # and what holds it is the thread biting into the bore.
+  m-press-opening:
+    desc: Press fit opening onto an M%size% thread, at the thread's pitch diameter
+    parameters:
+      size: 3.0
+    inherits:
+      "m;size=%size%":
+        opening:
+          sketch: "m-press;size=%size%"
+    # A hole lines up with the holes something reaches it through. What it is
+    # pushed onto is named from the fastener's side, where the rest of the
+    # bolt's pairings are - and it is named there with 'snapIn', because the
+    # two are expected to share the space the thread bites into.
+    mates:
+      - "m-press-opening;size=%size%"
+      - "m-opening;size=%size%"
+
+  m-press-thru:
+    desc: Press fit through hole onto an M%size% thread
+    parameters:
+      size: 3.0
+    inherits:
+      "m-press-opening;size=%size%": thru
+
+  m-press-thru-depth:
+    desc: "%depth%mm thick press fit through hole onto an M%size% thread"
+    parameters:
+      size: 3.0
+      depth: 3.0
+    inherits:
+      "m-press-thru;size=%size%": "%depth%mm"
+
+  m-press-hole:
+    desc: "%depth%mm deep press fit hole onto an M%size% thread"
+    parameters:
+      size: 3.0
+      depth: 3.0
+    inherits:
+      "m-press-opening;size=%size%": "%depth%mm-hole"
 
   m-hole:
     desc: "%depth%mm deep ISO 273 clearance hole for an M%size% screw"
@@ -576,11 +638,22 @@ interfaces:
     # The thread it has to *find*, so both ends of the connection are checked
     # against each other - which is what a screw's thread is exempt from.
     threadStep: "%{{ coarse_pitch }}%"
+    # One bolt holds a stack: everything it clamps sits along its length, which
+    # is the arrangement "m-shaft" declares this for. The *hole* takes one bolt;
+    # the bolt takes as many parts as it is long enough to reach through.
+    multiConnect: true
     inherits:
       "m;size=%size%": bolt
     mates:
-      - "m-opening;size=%size%"
-      - "m-tapped-opening;size=%size%"
+      # What it passes through on the way, and the thread it takes hold of.
+      "m-opening;size=%size%": {}
+      "m-tapped-opening;size=%size%": {}
+      # And the bore it is pushed into rather than screwed into. The thread
+      # bites into it, so the two are expected to share that much space -
+      # which is what "snapIn" says, and why it is said of the pairing: the
+      # same bolt cuts nothing on its way through the clearance hole above.
+      "m-press-opening;size=%size%":
+        snapIn: true
 
   m-bolt-length:
     desc: "%length%mm long M%size% bolt"
