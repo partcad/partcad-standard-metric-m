@@ -55,8 +55,12 @@ parts:
 | ``m-bolt-length`` | ``size``, ``length`` | ``m4-bolt-12`` |
 
 The sketches that draw the port boundaries are parametric in the same way, and
-the per-size sketch names (``m4``, ``m4-clearance``, ``m4-pilot``,
-``m4-slotted-30``) are aliases of them. ``m-slotted-*`` draws an actual slot --
+the per-size sketch names (``m4-major``, ``m4-clearance``, ``m4-pilot``,
+``m4-slotted-30``) are aliases of them. The plain circle at the thread's major
+diameter is ``m-major`` (``m4-major``, ...), not ``m`` (``m4``): PartCAD holds a
+package to one object per name whatever its kind, and ``m`` and ``m4`` are the
+interfaces. The sketch was renamed rather than the interface because the
+interfaces are what other packages connect through. ``m-slotted-*`` draws an actual slot --
 a rectangle with semicircular ends -- where it used to draw a plain circle and
 carry a TODO about it; PartCAD's "basic" sketches have a ``slot`` outline.
 

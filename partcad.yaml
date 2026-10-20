@@ -183,7 +183,11 @@ partcad: ">=0.6.29"
 sketches:
 {% if parametric %}
   # Declared once, and read with expressions over their own parameters.
-  m:
+  #
+  # "m-major" rather than "m": a name is one object of a package whatever its
+  # kind, and "m" (like every "m<size>") is the interface. It is named for the
+  # diameter it draws, as "m-pilot" and "m-press" below are.
+  m-major:
     desc: The boundary of an M%size% thread, at its %size%mm major diameter
     type: basic
     circle: "%size / 2%"  # radius
@@ -278,9 +282,11 @@ sketches:
         default: 0.0
 
   # The sketch names this package has published, each an alias of one instance
-  # of those above, plus the two the split into kinds of opening adds.
+  # of those above, plus the two the split into kinds of opening adds. The
+  # plain circle is "m<size>-major" here, and "m<size>" on the branch below: on
+  # this one "m<size>" is the interface, and a name is one object.
 {% for size in all_sizes %}
-  m{{ size }}: ":m;size={{ size }}"
+  m{{ size }}-major: ":m-major;size={{ size }}"
   m{{ size }}-clearance: ":m-clearance-medium;size={{ size }}"
   m{{ size }}-pilot: ":m-pilot;size={{ size }}"
   m{{ size }}-press: ":m-press;size={{ size }}"
@@ -312,7 +318,7 @@ interfaces:
       # M4 interface has a port called "m4".
       "m%size%":
         location: [[0, 0, 0], [0, 0, 1], 0] # redandant, for demonstration
-        sketch: m
+        sketch: m-major
         params:
           size: "%size%"
     parameters:
